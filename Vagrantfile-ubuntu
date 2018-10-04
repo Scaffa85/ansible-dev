@@ -1,7 +1,7 @@
 # Our master node will also run a copy of Ansible
 $install_ansible = <<SCRIPT
-sudo yum update && \
-    sudo yum install -y python python-pip build-essential libssl-dev \
+sudo apt-get update && \
+    sudo apt-get install -y python python-pip build-essential libssl-dev \
         libffi-dev python-dev && \
     sudo pip install ansible==2.2.1.0
 SCRIPT
@@ -9,7 +9,7 @@ SCRIPT
 # In order to use Ubuntu Xenial, we need to install Python on each of our
 # machines. This is the first part of provisioning.
 $install_python = <<SCRIPT
-sudo yum update && sudo yum install -y python
+sudo apt-get update && sudo apt-get install -y python
 SCRIPT
 
 # Using Vagrant version 2. No ifs or buts.
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
 
     # Primary node config
     PRIMARY = {
-        :box => "centos/7",
+        :box => "ubuntu/xenial64",
         :memory => 512,
         :shell_provision => $install_ansible,
         :hostname => "master",
@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
 
     # Secondary node config
     SECONDARY = {
-        :box => "centos/7",
+        :box => "ubuntu/xenial64",
         :memory => 512,
         :shell_provision => $install_python,
         :hostname => "node",

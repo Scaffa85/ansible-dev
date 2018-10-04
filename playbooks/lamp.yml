@@ -5,14 +5,14 @@
     - name: Update package manager
       become: yes
       become_method: sudo
-      apt: update_cache=yes
+      yum: update_cache=yes
 
     - name: Install a LAMP stack
       become: yes
       become_method: sudo
-      apt: name={{ item }} state=present
+      yum: name={{ item }} state=present
       with_items:
-        - apache2
+        - httpd
         - mysql-server
         - php
         - php-mysql

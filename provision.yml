@@ -12,7 +12,7 @@
   tasks:
     - name: Upgrade OS
       become: yes
-      apt:
+      yum:
         upgrade: dist
         update_cache: yes
 
