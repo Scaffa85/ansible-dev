@@ -1,87 +1,31 @@
-# Our master node will also run a copy of Ansible
-$install_ansible = <<SCRIPT
-sudo yum update && \
-    sudo yum install -y python python-pip build-essential libssl-dev \
-        libffi-dev python-dev && \
-    sudo pip install ansible==2.2.1.0
-SCRIPT
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
-# In order to use Ubuntu Xenial, we need to install Python on each of our
-# machines. This is the first part of provisioning.
-$install_python = <<SCRIPT
-sudo yum update && sudo yum install -y python
-SCRIPT
-
-# Using Vagrant version 2. No ifs or buts.
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
 Vagrant.configure("2") do |config|
-    # Number of nodes. On an i5 with 8Gb RAM I use 3.
-    # This MUST be > 1
-    N = 3
+  ## Setup Ansible Server
+  config.vm.define "acs" do |acs|
+    acs.vm.box = "ubuntu/xenial64"
+    acs.vm.hostname = "acs"
+    acs.vm.network "private_network", ip: "192.168.33.10"
+  end
 
-    # Playbook to use
-    PLAYBOOK = "provision.yml"
+  ## Setup Web Server
+  config.vm.define "web" do |web|
+    web.vm.box = "ubuntu/xenial64"
+    web.vm.hostname = "web"
+    web.vm.network "private_network", ip: "192.168.33.20"
+    web.vm.network "forwarded_port", guest: 80, host: 8080
+  end
 
-    # Primary node config
-    PRIMARY = {
-        :box => "centos/7",
-        :memory => 512,
-        :shell_provision => $install_ansible,
-        :hostname => "master",
-    }
+  ## Setup Database Server
+  config.vm.define "db" do |db|
+    db.vm.box = "centos/7"
+    db.vm.hostname = "db"
+    db.vm.network "private_network", ip: "192.168.33.30"
+  end
 
-    # Secondary node config
-    SECONDARY = {
-        :box => "centos/7",
-        :memory => 512,
-        :shell_provision => $install_python,
-        :hostname => "node",
-    }
-
-    # Iterate for nodes
-    (1..N).each do |node_id|
-        nid = (node_id - 1)
-
-        # Set our primary node
-        if nid == 0
-            config.vm.define "node#{nid}", primary: true do |n|
-                n.vm.box = PRIMARY[:box]
-                n.vm.boot_timeout = 600
-                n.vm.hostname = "#{PRIMARY[:hostname]}#{nid}"
-                n.vm.network "private_network", ip: "10.8.10.#{10 + nid}"
-
-                n.vm.provider "virtualbox" do |vb|
-                    vb.name = "#{PRIMARY[:hostname]}#{nid}"
-                    vb.memory = PRIMARY[:memory]
-                end
-
-                # Install Python on this node.
-                n.vm.provision "shell", inline: PRIMARY[:shell_provision]
-            end
-        else
-            # Define our secondary nodes
-            config.vm.define "node#{nid}" do |n|
-                n.vm.box = SECONDARY[:box]
-                n.vm.boot_timeout = 600
-                n.vm.hostname = "#{SECONDARY[:hostname]}#{nid}"
-                n.vm.network "private_network", ip: "10.8.10.#{10 + nid}"
-
-                n.vm.provider "virtualbox" do |vb|
-                    vb.name = "#{SECONDARY[:hostname]}#{nid}"
-                    vb.memory = SECONDARY[:memory]
-                end
-
-                # Install Python on this node.
-                n.vm.provision "shell", inline: SECONDARY[:shell_provision]
-
-                # If this is our last node, lets provision all.
-                if node_id == N
-                    n.vm.provision "ansible" do |a|
-                        a.limit = "all"
-                        a.verbose = "v"
-                        a.playbook = PLAYBOOK
-                    end
-                end
-            end
-        end
-    end
 end
