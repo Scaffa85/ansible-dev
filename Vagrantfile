@@ -14,17 +14,17 @@ Vagrant.configure("2") do |config|
   end
 
   ## Setup Web Server
-  config.vm.define "web" do |web|
+  config.vm.define "ubuntu" do |web|
     web.vm.box = "ubuntu/xenial64"
-    web.vm.hostname = "web"
+    web.vm.hostname = "ubuntu"
     web.vm.network "private_network", ip: "192.168.33.20"
     web.vm.network "forwarded_port", guest: 80, host: 8080
   end
 
   ## Setup Database Server
-  config.vm.define "db" do |db|
+  config.vm.define "centos" do |db|
     db.vm.box = "centos/7"
-    db.vm.hostname = "db"
+    db.vm.hostname = "centos"
     db.vm.network "private_network", ip: "192.168.33.30"
   end
 
